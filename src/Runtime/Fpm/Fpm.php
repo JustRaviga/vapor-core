@@ -213,6 +213,7 @@ class Fpm
     {
         try {
             if (! $this->fpm || ! $this->fpm->isRunning()) {
+                fwrite(STDERR, 'DEDMYTRO: PHP-FPM has stopped unexpectedly.'.PHP_EOL);
                 throw new Exception('PHP-FPM has stopped unexpectedly.');
             }
         } catch (Throwable $e) {

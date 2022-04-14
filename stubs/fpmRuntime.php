@@ -89,6 +89,8 @@ while (true) {
                     ->toApiGatewayFormat();
     });
 
+    fwrite(STDERR, 'DEDMYTRO: Invocation processed.'.PHP_EOL);
+
     $fpm->ensureRunning();
 
     LambdaContainer::terminateIfInvocationLimitHasBeenReached(
