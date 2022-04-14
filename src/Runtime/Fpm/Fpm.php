@@ -126,8 +126,8 @@ class Fpm
 
         fwrite(STDERR, 'Starting FPM Process...'.PHP_EOL);
 
-        $this->fpm
-            ->setTimeout(25)
+        $this->fpm->disableOutput()
+            ->setTimeout(15)
             ->start(function ($type, $output) {
                 fwrite(STDERR, $output.PHP_EOL);
             });

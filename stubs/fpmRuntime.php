@@ -65,6 +65,8 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
     $app->make(ConsoleKernelContract::class)->call('config:cache');
 });
 
+fwrite(STDERR, 'Boot finished'.PHP_EOL);
+
 /*
 |--------------------------------------------------------------------------
 | Listen For Lambda Invocations
