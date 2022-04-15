@@ -171,8 +171,12 @@ class Fpm
                 configureScope(fn(Scope $scope) => $scope->setExtra('Tried to kill fpm', $e->getMessage()));
             }
 
-            configureScope(fn(Scope $scope) => $scope->setExtras([
+            configureScope(fn(Scope $scope) => $scope->setTags([
+                'method' => $request->getRequestMethod(),
                 'uri' => $request->getRequestUri(),
+            ]));
+
+            configureScope(fn(Scope $scope) => $scope->setExtras([
                 'params' => $request->getParams(),
             ]));
 
