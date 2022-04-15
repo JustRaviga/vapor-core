@@ -85,6 +85,9 @@ class LambdaRuntime
             'invocationId' => $invocationId,
             'errorType' => get_class($error),
             'stackTrace' => explode(PHP_EOL, $error->getTraceAsString()),
+            'Memory now:' => round(memory_get_usage() / 1024 / 1024, 2).' MB',
+            'Memory peak:' => round(memory_get_peak_usage() / 1024 / 1024, 2).' MB',
+            'CPU Avg' => round(sys_getloadavg()[0], 2).'%',
         ]);
     }
 }

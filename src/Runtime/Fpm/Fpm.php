@@ -8,8 +8,10 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use Laravel\Vapor\Exceptions\SentryHandler;
+use Sentry\State\Scope;
 use Symfony\Component\Process\Process;
 use Throwable;
+use function Sentry\configureScope;
 
 class Fpm
 {
@@ -19,57 +21,54 @@ class Fpm
 
     /**
      * The static FPM instance for the container.
-     *
      * @var static
      */
     protected static $instance;
 
     /**
      * The file that should be invoked by FPM.
-     *
      * @var string
      */
     protected $handler;
 
     /**
      * The additional server variables that should be passed to FPM.
-     *
      * @var array
      */
     protected $serverVariables = [];
 
     /**
      * The FPM socket client instance.
-     *
      * @var \Hoa\Socket\Client
      */
     protected $client;
 
     /**
      * The FPM socket connection instance.
-     *
      * @var \Hoa\FastCGI\SocketConnections\UnixDomainSocket
      */
     protected $socketConnection;
 
     /**
      * The FPM process instance.
-     *
      * @var \Symfony\Component\Process\Process
      */
     protected $fpm;
 
     /**
      * Create a new FPM instance.
-     *
-     * @param  \Hoa\Socket\Client  $handler
-     * @param  \Hoa\FastCGI\SocketConnections\UnixDomainSocket  $socketConnection
-     * @param  string  $handler
-     * @param  array  $serverVariables
+     * @param \Hoa\Socket\Client $handler
+     * @param \Hoa\FastCGI\SocketConnections\UnixDomainSocket $socketConnection
+     * @param string $handler
+     * @param array $serverVariables
      * @return void
      */
-    public function __construct(Client $client, UnixDomainSocket $socketConnection, string $handler, array $serverVariables = [])
-    {
+    public function __construct(
+        Client $client,
+        UnixDomainSocket $socketConnection,
+        string $handler,
+        array $serverVariables = []
+    ) {
         $this->client = $client;
         $this->handler = $handler;
         $this->serverVariables = $serverVariables;
@@ -78,9 +77,8 @@ class Fpm
 
     /**
      * Boot FPM with the given handler.
-     *
-     * @param  string  $handler
-     * @param  array  $serverVariables
+     * @param string $handler
+     * @param array $serverVariables
      * @return static
      */
     public static function boot($handler, array $serverVariables = [])
@@ -91,14 +89,14 @@ class Fpm
 
         $socketConnection = new UnixDomainSocket(self::SOCKET, 1000, 900000);
 
-        return static::$instance = tap(new static(new Client, $socketConnection, $handler, $serverVariables), function ($fpm) {
-            $fpm->start();
-        });
+        return static::$instance = tap(new static(new Client, $socketConnection, $handler, $serverVariables),
+            function ($fpm) {
+                $fpm->start();
+            });
     }
 
     /**
      * Resolve the static FPM instance.
-     *
      * @return static
      */
     public static function resolve()
@@ -140,16 +138,15 @@ class Fpm
 
     /**
      * Ensure that the proper configuration is in place to start FPM.
-     *
      * @return void
      */
     protected function ensureReadyToStart()
     {
-        if (! is_dir(dirname(self::SOCKET))) {
+        if (!is_dir(dirname(self::SOCKET))) {
             mkdir(dirname(self::SOCKET));
         }
 
-        if (! file_exists(self::CONFIG)) {
+        if (!file_exists(self::CONFIG)) {
             file_put_contents(
                 self::CONFIG,
                 file_get_contents(__DIR__.'/../../../stubs/php-fpm.conf')
@@ -159,8 +156,7 @@ class Fpm
 
     /**
      * Proxy the request to PHP-FPM and return its response.
-     *
-     * @param  \Laravel\Vapor\Runtime\Fpm\FpmRequest  $request
+     * @param \Laravel\Vapor\Runtime\Fpm\FpmRequest $request
      * @return \Laravel\Vapor\Runtime\Fpm\FpmResponse
      */
     public function handle($request)
@@ -169,26 +165,30 @@ class Fpm
             return (new FpmApplication($this->client, $this->socketConnection))
                 ->handle($request);
         } catch (Throwable $e) {
-            SentryHandler::reportException($e, [
+            try {
+                $this->killExistingFpm();
+            } catch (Throwable $e) {
+                configureScope(fn(Scope $scope) => $scope->setExtra('Tried to kill fpm', $e->getMessage()));
+            }
+
+            configureScope(fn(Scope $scope) => $scope->setExtras([
                 'uri' => $request->getRequestUri(),
                 'params' => $request->getParams(),
-                'envs' => $_ENV,
-            ]);
+            ]));
 
-            $this->killExistingFpm();
+            throw $e;
         }
     }
 
     /**
      * Wait until the FPM process is ready to receive requests.
-     *
      * @return void
      */
     protected function ensureFpmHasStarted()
     {
         $elapsed = 0;
 
-        while (! $this->isReady()) {
+        while (!$this->isReady()) {
             usleep(5000);
 
             $elapsed += 5000;
@@ -197,7 +197,7 @@ class Fpm
                 throw new Exception('Timed out waiting for FPM to start: '.self::SOCKET);
             }
 
-            if (! $this->fpm->isRunning()) {
+            if (!$this->fpm->isRunning()) {
                 throw new Exception('PHP-FPM was unable to start.');
             }
         }
@@ -205,7 +205,6 @@ class Fpm
 
     /**
      * Determine is the FPM process is ready to receive requests.
-     *
      * @return bool
      */
     protected function isReady()
@@ -217,20 +216,17 @@ class Fpm
 
     /**
      * Ensure that the FPM process is still running.
-     *
      * @return void
-     *
      * @throws \Exception
      */
     public function ensureRunning()
     {
         try {
-            if (! $this->fpm || ! $this->fpm->isRunning()) {
+            if (!$this->fpm || !$this->fpm->isRunning()) {
                 fwrite(STDERR, 'DEDMYTRO: PHP-FPM has stopped unexpectedly.'.PHP_EOL);
                 throw new Exception('PHP-FPM has stopped unexpectedly.');
             }
         } catch (Throwable $e) {
-            SentryHandler::reportException($e);
             echo $e->getMessage().PHP_EOL;
 
             exit(1);
@@ -239,7 +235,6 @@ class Fpm
 
     /**
      * Stop the FPM process.
-     *
      * @return void
      */
     public function stop()
@@ -251,14 +246,13 @@ class Fpm
 
     /**
      * Kill any existing FPM processes on the system.
-     *
      * @return void
      */
     protected function killExistingFpm()
     {
         fwrite(STDERR, 'Killing existing FPM'.PHP_EOL);
 
-        if (! file_exists(static::PID_FILE)) {
+        if (!file_exists(static::PID_FILE)) {
             return unlink(static::SOCKET);
         }
 
@@ -281,7 +275,6 @@ class Fpm
 
     /**
      * Remove FPM's process related files.
-     *
      * @return void
      */
     protected function removeFpmProcessFiles()
@@ -292,8 +285,7 @@ class Fpm
 
     /**
      * Wait until the given process is stopped.
-     *
-     * @param  int  $pid
+     * @param int $pid
      * @return void
      */
     protected function waitUntilStopped($pid)
@@ -313,7 +305,6 @@ class Fpm
 
     /**
      * Get the underlying process.
-     *
      * @return \Symfony\Component\Process\Process
      */
     public function process()
@@ -323,7 +314,6 @@ class Fpm
 
     /**
      * Get the handler.
-     *
      * @return string
      */
     public function handler()
@@ -333,7 +323,6 @@ class Fpm
 
     /**
      * Get the server variables.
-     *
      * @return array
      */
     public function serverVariables()
@@ -343,7 +332,6 @@ class Fpm
 
     /**
      * Handle the destruction of the class.
-     *
      * @return void
      */
     public function __destruct()
