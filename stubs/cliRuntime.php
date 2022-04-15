@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Config\Repository;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
 use Laravel\Vapor\Exceptions\SentryHandler;
 use Laravel\Vapor\Runtime\CliHandlerFactory;
@@ -7,6 +8,8 @@ use Laravel\Vapor\Runtime\LambdaContainer;
 use Laravel\Vapor\Runtime\LambdaRuntime;
 use Laravel\Vapor\Runtime\Secrets;
 use Laravel\Vapor\Runtime\StorageDirectories;
+
+fwrite(STDERR, 'Init CLI Runtime...'.PHP_EOL);
 
 /*
 |--------------------------------------------------------------------------
@@ -46,9 +49,6 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
         file_put_contents($app->storagePath().'/framework/down', '[]');
     }
 
-    fwrite(STDERR, 'Try to init Sentry...'.PHP_EOL);
-    \Laravel\Vapor\Exceptions\SentryHandler::init();
-
     echo 'Caching Laravel configuration'.PHP_EOL;
 
     try {
@@ -57,6 +57,12 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
         echo 'Failing caching Laravel configuration: '.$e->getMessage().PHP_EOL;
         SentryHandler::reportException($e);
     }
+
+    fwrite(STDERR, 'Init config...'.PHP_EOL);
+    $app->instance('config',new Repository(require $app->getCachedConfigPath()));
+
+    fwrite(STDERR, 'Try to init Sentry...'.PHP_EOL);
+    \Laravel\Vapor\Exceptions\SentryHandler::init();
 });
 
 /*

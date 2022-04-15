@@ -8,6 +8,8 @@ use Laravel\Vapor\Runtime\Octane\OctaneHttpHandlerFactory;
 use Laravel\Vapor\Runtime\Secrets;
 use Laravel\Vapor\Runtime\StorageDirectories;
 
+fwrite(STDERR, 'Init Octane Runtime...'.PHP_EOL);
+
 /*
 |--------------------------------------------------------------------------
 | Inject SSM Secrets Into Environment
@@ -43,12 +45,15 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
 
     $app->useStoragePath(StorageDirectories::PATH);
 
-    fwrite(STDERR, 'Try to init Sentry...'.PHP_EOL);
-    \Laravel\Vapor\Exceptions\SentryHandler::init();
-
     fwrite(STDERR, 'Caching Laravel configuration'.PHP_EOL);
 
     $app->make(ConsoleKernelContract::class)->call('config:cache');
+
+    fwrite(STDERR, 'Init config...'.PHP_EOL);
+    $app->instance('config',new \Illuminate\Config\Repository(require $app->getCachedConfigPath()));
+
+    fwrite(STDERR, 'Try to init Sentry...'.PHP_EOL);
+    \Laravel\Vapor\Exceptions\SentryHandler::init();
 });
 
 /*
