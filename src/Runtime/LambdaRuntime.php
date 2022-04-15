@@ -51,8 +51,6 @@ class LambdaRuntime
             $this->notifyLambdaOfResponse($invocationId, $callback($invocationId, $event));
         } catch (Throwable $error) {
             $this->handleException($invocationId, $error);
-
-            throw new LambdaInvocationException($invocationId);
         }
     }
 
