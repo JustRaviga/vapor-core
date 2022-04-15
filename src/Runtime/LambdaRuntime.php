@@ -3,6 +3,7 @@
 namespace Laravel\Vapor\Runtime;
 
 use Exception;
+use Laravel\Vapor\Exceptions\LambdaInvocationException;
 use Laravel\Vapor\Exceptions\SentryHandler;
 use Throwable;
 
@@ -51,7 +52,7 @@ class LambdaRuntime
         } catch (Throwable $error) {
             $this->handleException($invocationId, $error);
 
-            exit(1);
+            throw new LambdaInvocationException($invocationId);
         }
     }
 

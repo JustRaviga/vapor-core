@@ -27,7 +27,6 @@ class SentryHandler
             init(['dsn' => config('vapor.sentry_dsn'), 'environment' => $_ENV['APP_ENV']]);
             self::$initialized = true;
             fwrite(STDERR, 'Sentry initialized.'.PHP_EOL);
-            captureMessage('Sentry initialized.');
         }
     }
 
