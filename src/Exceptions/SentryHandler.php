@@ -1,6 +1,6 @@
 <?php
 
-namespace Laravel\Vapor\Exceptions\Sentry;
+namespace Laravel\Vapor\Exceptions;
 
 use Sentry\State\Scope;
 use function Sentry\captureException;

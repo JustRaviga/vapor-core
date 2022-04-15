@@ -5,7 +5,7 @@ namespace Laravel\Vapor\Runtime\Fpm;
 use Exception;
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
-use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
+use Laravel\Vapor\Exceptions\SentryHandler;
 use Symfony\Component\Process\Process;
 use Throwable;
 

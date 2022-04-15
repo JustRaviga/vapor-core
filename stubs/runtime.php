@@ -25,7 +25,7 @@ fwrite(STDERR, 'Loaded Composer autoload file'.PHP_EOL);
 |
 */
 
-\Laravel\Vapor\Exceptions\Sentry\SentryHandler::init();
+\Laravel\Vapor\Exceptions\SentryHandler::init();
 
 if (isset($_ENV['APP_RUNNING_IN_CONSOLE']) && $_ENV['APP_RUNNING_IN_CONSOLE'] === 'true') {
     return require __DIR__.'/cliRuntime.php';

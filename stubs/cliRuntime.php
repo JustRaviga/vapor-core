@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
-use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
+use Laravel\Vapor\Exceptions\SentryHandler;
 use Laravel\Vapor\Runtime\CliHandlerFactory;
 use Laravel\Vapor\Runtime\LambdaContainer;
 use Laravel\Vapor\Runtime\LambdaRuntime;

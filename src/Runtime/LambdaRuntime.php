@@ -3,7 +3,7 @@
 namespace Laravel\Vapor\Runtime;
 
 use Exception;
-use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
+use Laravel\Vapor\Exceptions\SentryHandler;
 use Throwable;
 
 class LambdaRuntime
