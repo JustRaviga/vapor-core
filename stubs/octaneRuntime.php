@@ -43,6 +43,9 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
 
     $app->useStoragePath(StorageDirectories::PATH);
 
+    fwrite(STDERR, 'Try to init Sentry...'.PHP_EOL);
+    \Laravel\Vapor\Exceptions\SentryHandler::init();
+
     fwrite(STDERR, 'Caching Laravel configuration'.PHP_EOL);
 
     $app->make(ConsoleKernelContract::class)->call('config:cache');

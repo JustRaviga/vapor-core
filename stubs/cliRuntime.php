@@ -46,6 +46,9 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
         file_put_contents($app->storagePath().'/framework/down', '[]');
     }
 
+    fwrite(STDERR, 'Try to init Sentry...'.PHP_EOL);
+    \Laravel\Vapor\Exceptions\SentryHandler::init();
+
     echo 'Caching Laravel configuration'.PHP_EOL;
 
     try {
