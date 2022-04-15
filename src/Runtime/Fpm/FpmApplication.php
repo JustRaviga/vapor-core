@@ -43,18 +43,8 @@ class FpmApplication
      */
     public function handle(FpmRequest $request)
     {
-        try {
-            return new FpmResponse(
-                $this->client->sendRequest($this->socketConnection, $request)
-            );
-        } catch (ReadFailedException|WriteFailedException|Throwable $e) {
-            SentryHandler::reportException($e, [
-                'uri' => $request->getRequestUri(),
-                'params' => $request->getParams(),
-                'envs' => $_ENV,
-            ]);
-
-            throw $e;
-        }
+        return new FpmResponse(
+            $this->client->sendRequest($this->socketConnection, $request)
+        );
     }
 }
