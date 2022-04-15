@@ -1,10 +1,12 @@
 <?php
 
+use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
+
 ini_set('display_errors', '1');
 
 error_reporting(E_ALL);
 
-if (! file_exists('/tmp/opcache')) {
+if (!file_exists('/tmp/opcache')) {
     mkdir('/tmp/opcache');
 }
 
@@ -24,6 +26,8 @@ fwrite(STDERR, 'Loaded Composer autoload file'.PHP_EOL);
 | environment variable for the console layer that we will use to check this.
 |
 */
+
+SentryHandler::init();
 
 if (isset($_ENV['APP_RUNNING_IN_CONSOLE']) && $_ENV['APP_RUNNING_IN_CONSOLE'] === 'true') {
     return require __DIR__.'/cliRuntime.php';

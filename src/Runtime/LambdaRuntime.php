@@ -3,6 +3,7 @@
 namespace Laravel\Vapor\Runtime;
 
 use Exception;
+use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
 use Throwable;
 
 class LambdaRuntime
@@ -11,15 +12,13 @@ class LambdaRuntime
 
     /**
      * The Lambda API URL.
-     *
      * @var string
      */
     protected $apiUrl;
 
     /**
      * Create a new Lambda runtime.
-     *
-     * @param  string  $apiUrl
+     * @param string $apiUrl
      * @return void
      */
     public function __construct($apiUrl)
@@ -29,7 +28,6 @@ class LambdaRuntime
 
     /**
      * Create new Lambda runtime from the API environment variable.
-     *
      * @return static
      */
     public static function fromEnvironmentVariable()
@@ -39,8 +37,7 @@ class LambdaRuntime
 
     /**
      * Handle the next Lambda invocation.
-     *
-     * @param  callable  $callback
+     * @param callable $callback
      * @return void
      */
     public function nextInvocation(callable $callback)
@@ -60,16 +57,15 @@ class LambdaRuntime
 
     /**
      * Inform Lambda of an invocation failure.
-     *
-     * @param  string  $invocationId
-     * @param  \Throwable  $error
+     * @param string $invocationId
+     * @param \Throwable $error
      * @return void
      */
     public function handleException(string $invocationId, Throwable $error)
     {
         $errorMessage = $error instanceof Exception
-                    ? 'Uncaught '.get_class($error).': '.$error->getMessage()
-                    : $error->getMessage();
+            ? 'Uncaught '.get_class($error).': '.$error->getMessage()
+            : $error->getMessage();
 
         fwrite(STDERR, sprintf(
             "Fatal error: %s in %s:%d\nStack trace:\n%s".PHP_EOL,
@@ -81,6 +77,12 @@ class LambdaRuntime
 
         $this->notifyLambdaOfError($invocationId, [
             'errorMessage' => $error->getMessage(),
+            'errorType' => get_class($error),
+            'stackTrace' => explode(PHP_EOL, $error->getTraceAsString()),
+        ]);
+
+        SentryHandler::reportException($error, [
+            'invocationId' => $invocationId,
             'errorType' => get_class($error),
             'stackTrace' => explode(PHP_EOL, $error->getTraceAsString()),
         ]);

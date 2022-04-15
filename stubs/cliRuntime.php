@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
+use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
 use Laravel\Vapor\Runtime\CliHandlerFactory;
 use Laravel\Vapor\Runtime\LambdaContainer;
 use Laravel\Vapor\Runtime\LambdaRuntime;
@@ -51,6 +52,7 @@ with(require __DIR__.'/bootstrap/app.php', function ($app) {
         $app->make(ConsoleKernelContract::class)->call('config:cache');
     } catch (Throwable $e) {
         echo 'Failing caching Laravel configuration: '.$e->getMessage().PHP_EOL;
+        SentryHandler::reportException($e);
     }
 });
 

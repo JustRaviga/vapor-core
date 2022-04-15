@@ -5,6 +5,7 @@ namespace Laravel\Vapor\Runtime\Fpm;
 use Exception;
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use Laravel\Vapor\Exceptions\Sentry\SentryHandler;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -217,6 +218,7 @@ class Fpm
                 throw new Exception('PHP-FPM has stopped unexpectedly.');
             }
         } catch (Throwable $e) {
+            SentryHandler::reportException($e);
             echo $e->getMessage().PHP_EOL;
 
             exit(1);

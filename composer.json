@@ -25,6 +25,7 @@
         "monolog/monolog": "^1.12|^2.0",
         "nyholm/psr7": "^1.0",
         "riverline/multipart-parser": "^2.0.9",
+        "sentry/sdk": "^3.1",
         "symfony/process": "^4.3|^5.0|^6.0",
         "symfony/psr-http-message-bridge": "^1.0|^2.0"
     },
