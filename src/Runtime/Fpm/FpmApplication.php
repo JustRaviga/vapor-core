@@ -4,8 +4,10 @@ namespace Laravel\Vapor\Runtime\Fpm;
 
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
+use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use Laravel\Vapor\Exceptions\SentryHandler;
+use Throwable;
 
 class FpmApplication
 {
@@ -45,10 +47,11 @@ class FpmApplication
             return new FpmResponse(
                 $this->client->sendRequest($this->socketConnection, $request)
             );
-        } catch (ReadFailedException $e) {
+        } catch (ReadFailedException|WriteFailedException|Throwable $e) {
             SentryHandler::reportException($e, [
                 'uri' => $request->getRequestUri(),
                 'params' => $request->getParams(),
+                'envs' => $_ENV,
             ]);
 
             throw $e;
